@@ -3,6 +3,7 @@ import torch
 import easyocr
 import cv2
 import csv
+import pandas as pd  # Import pandas for creating DataFrame
 
 from ultralytics.yolo.engine.predictor import BasePredictor
 from ultralytics.yolo.utils import DEFAULT_CONFIG, ROOT, ops
@@ -16,22 +17,30 @@ def getOCR(im, coors, filename):
     x, y, w, h = int(coors[0]), int(coors[1]), int(coors[2]), int(coors[3])
     plate_roi = im[y:h, x:w]
     
-    gray_plate = cv2.cvtColor(plate_roi, cv2.COLOR_RGB2GRAY)
+    gray_plate = cv2.cvtColor(plate_roi, cv2.COLOR_BGR2GRAY)  # Convert to grayscale
+    # Convert grayscale image to RGB for EasyOCR
+    rgb_plate = cv2.cvtColor(gray_plate, cv2.COLOR_GRAY2RGB)
     
-    results = reader.readtext(gray_plate)
+    results = reader.readtext(rgb_plate)
     
     text = ""
     for result in results:
         text += result[1] + " "
     
     # Save CSV file inside content folder
-    csv_file_path = "/content/number_plate.csv"
+    csv_file_path = f"/content/{filename}.csv"
     with open(csv_file_path, 'w', newline='', encoding='utf-8') as csvfile:
         csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(['Detected Number Plates'])
+        csv_writer.writerow(['Number Plate Details'])
         csv_writer.writerow([text])
     
-    return csv_file_path
+    # Create a DataFrame with detected details
+    detect = pd.DataFrame({'Number Plate Details': [text]})
+    
+    return csv_file_path, detect
+
+# Other code remains unchanged...
+
 
 class DetectionPredictor(BasePredictor):
 
