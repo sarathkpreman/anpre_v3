@@ -25,7 +25,7 @@ def getOCR(im, coors, filename):
         text += result[1] + " "
     
     # Save CSV file inside content folder
-    csv_file_path = "/content/extracted_number_plate.csv"
+    csv_file_path = f"/content/{filename}.csv"
     with open(csv_file_path, 'w', newline='', encoding='utf-8') as csvfile:
         csv_writer = csv.writer(csvfile)
         csv_writer.writerow(['Number Plate Details'])
@@ -80,31 +80,22 @@ class DetectionPredictor(BasePredictor):
         self.all_outputs.append(det)
         if len(det) == 0:
             return log_string
-        for c in det[:, 5].unique():
-            n = (det[:, 5] == c).sum()  # detections per class
-            log_string += f"{n} {self.model.names[int(c)]}{'s' * (n > 1)}, "
-        # write
-        gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
+        
+        # Iterate over each detection and extract number plate details
         for *xyxy, conf, cls in reversed(det):
-            if self.args.save_txt:  # Write to file
-                xywh = (ops.xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
-                line = (cls, *xywh, conf) if self.args.save_conf else (cls, *xywh)  # label format
-                with open(f'{self.txt_path}.txt', 'a') as f:
-                    f.write(('%g ' * len(line)).rstrip() % line + '\n')
-
-            if self.args.save or self.args.save_crop or self.args.show:  # Add bbox to image
-                c = int(cls)  # integer class
-                label = None if self.args.hide_labels else (
-                    self.model.names[c] if self.args.hide_conf else f'{self.model.names[c]} {conf:.2f}')
-                ocr = getOCR(im0, xyxy, self.data_path.stem)
-                if ocr != "":
-                    label = ocr
+            c = int(cls)  # integer class
+            label = f'{self.model.names[c]} {conf:.2f}'
+            ocr_file_path = getOCR(im0, xyxy, f'{self.data_path.stem}_{c}')  # Get OCR results for this detection
+            log_string += f"{label} OCR saved to {ocr_file_path}, "
+            
+            # Add bounding box to image
+            if self.args.save or self.args.save_crop or self.args.show:
                 self.annotator.box_label(xyxy, label, color=colors(c, True))
             if self.args.save_crop:
                 imc = im0.copy()
                 save_one_box(xyxy,
                              imc,
-                             file=self.save_dir / 'crops' / self.model.model.names[c] / f'{self.data_path.stem}.jpg',
+                             file=self.save_dir / 'crops' / self.model.model.names[c] / f'{self.data_path.stem}_{c}.jpg',
                              BGR=True)
 
         return log_string
