@@ -25,10 +25,10 @@ def getOCR(im, coors, filename):
         text += result[1] + " "
     
     # Save CSV file inside content folder
-    csv_file_path = f"/content/{filename}.csv"
+    csv_file_path = "/content/number_plate.csv"
     with open(csv_file_path, 'w', newline='', encoding='utf-8') as csvfile:
         csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(['Number Plate Details'])
+        csv_writer.writerow(['Detected Number Plates'])
         csv_writer.writerow([text])
     
     return csv_file_path
