@@ -99,9 +99,9 @@ class DetectionPredictor(BasePredictor):
 
         return log_string
 
-@hydra.main(config_path=str(DEFAULT_CONFIG.parent), config_name=DEFAULT_CONFIG.name)
+@hydra.main(config_path=str(DEFAULT_CONFIG.parent), config_name=DEFAULT_CONFIG.name, version_base=None)
 def predict(cfg):
     cfg.model = cfg.model or "yolov8n.pt"
     cfg.imgsz = check_imgsz(cfg.imgsz, min_dim=2)  # check image size
     cfg.source = cfg.source if cfg.source is not None else ROOT / "assets"
-    predictor = DetectionPredictor(cfg
+    predictor = DetectionPredictor(cfg)
