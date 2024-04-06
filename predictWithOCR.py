@@ -34,10 +34,7 @@ def getOCR(im, coors, filename):
         csv_writer.writerow(['Number Plate Details'])
         csv_writer.writerow([text])
     
-    # Create a DataFrame with detected details
-    detect = pd.DataFrame({'Number Plate Details': [text]})
-    
-    return csv_file_path, detect
+    return csv_file_path
 
 # Other code remains unchanged...
 
