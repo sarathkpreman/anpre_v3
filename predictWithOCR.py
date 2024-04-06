@@ -24,20 +24,28 @@ def getOCR(im, coors, filename):
     results = reader.readtext(rgb_plate)
     
     text = ""
-    for result in results:
-        text += result[1] + " "
-    
-    # Save CSV file inside content folder
-    csv_file_path = f"/content/{filename}.csv"
-    with open(csv_file_path, 'w', newline='', encoding='utf-8') as csvfile:
-        csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(['Number Plate Details'])
-        csv_writer.writerow([text])
-    
-    return csv_file_path
+    if results:  # Check if results are not empty
+        for result in results:
+            text += result[1] + " "
+        
+        # Save CSV file inside content folder
+        csv_file_path = "/content/number_plate.csv"
+        try:
+            with open(csv_file_path, 'w', newline='', encoding='utf-8') as csvfile:
+                csv_writer = csv.writer(csvfile)
+                # Write header only if the file is empty
+                if csvfile.tell() == 0:
+                    csv_writer.writerow(['Number Plate Details'])
+                csv_writer.writerow([text])
+            return csv_file_path
+        except Exception as e:
+            print(f"Error: {e}")
+            return None
+    else:
+        print("No text detected from number plate")
+        return None
 
 # Other code remains unchanged...
-
 
 class DetectionPredictor(BasePredictor):
 
