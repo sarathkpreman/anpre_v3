@@ -82,7 +82,9 @@ class DetectionPredictor(BasePredictor):
                 with open(csv_file_path, 'w', newline='', encoding='utf-8') as csvfile:
                     csv_writer = csv.writer(csvfile)
                     csv_writer.writerow(['Number Plate Details'])
-                    csv_writer.writerow([plate_details])
+                    # Split multiline details and write each one on a separate row
+                    details = plate_details.split('\n')
+                    csv_writer.writerow([" ".join(details)])  # Write details in single row with whitespace between lines
                 log_string += f"{label} OCR saved to {csv_file_path}, "
             else:
                 log_string += f"No text detected from number plate {label}, "
@@ -99,9 +101,13 @@ class DetectionPredictor(BasePredictor):
 
         return log_string
 
-@hydra.main(config_path=str(DEFAULT_CONFIG.parent), config_name=DEFAULT_CONFIG.name)
+@hydra.main(version_base=None, config_path=str(DEFAULT_CONFIG.parent), config_name=DEFAULT_CONFIG.name)
 def predict(cfg):
     cfg.model = cfg.model or "yolov8n.pt"
     cfg.imgsz = check_imgsz(cfg.imgsz, min_dim=2)  # check image size
     cfg.source = cfg.source if cfg.source is not None else ROOT / "assets"
     predictor = DetectionPredictor(cfg)
+    predictor()
+
+if __name__ == "__main__":
+    predict()
