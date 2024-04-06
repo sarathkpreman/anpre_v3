@@ -2,7 +2,7 @@ import cv2
 import easyocr
 import csv
 import hydra
-
+import torch
 from ultralytics.yolo.engine.predictor import BasePredictor
 from ultralytics.yolo.utils import DEFAULT_CONFIG, ROOT, ops
 from ultralytics.yolo.utils.checks import check_imgsz
