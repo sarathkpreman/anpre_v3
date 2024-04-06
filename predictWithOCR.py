@@ -1,6 +1,7 @@
 import cv2
 import easyocr
 import csv
+import hydra
 
 from ultralytics.yolo.engine.predictor import BasePredictor
 from ultralytics.yolo.utils import DEFAULT_CONFIG, ROOT, ops
