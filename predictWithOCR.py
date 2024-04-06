@@ -19,8 +19,8 @@ def getOCR(im):
     results = reader.readtext(rgb_plate)
     text = ""
     for result in results:
-        text += result[1] + "\n"  # Add a newline between each detail
-    return text
+        text += result[1] + " "  # Add a whitespace between each detail
+    return text.strip()  # Strip leading and trailing whitespace
 
 class DetectionPredictor(BasePredictor):
     def get_annotator(self, img):
@@ -104,8 +104,4 @@ def predict(cfg):
     cfg.model = cfg.model or "yolov8n.pt"
     cfg.imgsz = check_imgsz(cfg.imgsz, min_dim=2)  # check image size
     cfg.source = cfg.source if cfg.source is not None else ROOT / "assets"
-    predictor = DetectionPredictor(cfg)
-    predictor()
-
-if __name__ == "__main__":
-    predict()
+    predictor = DetectionPredictor(cfg
