@@ -1,9 +1,6 @@
-import hydra
-import torch
-import easyocr
 import cv2
+import easyocr
 import csv
-import pandas as pd  # Import pandas for creating DataFrame
 
 from ultralytics.yolo.engine.predictor import BasePredictor
 from ultralytics.yolo.utils import DEFAULT_CONFIG, ROOT, ops
@@ -13,37 +10,15 @@ from ultralytics.yolo.utils.plotting import Annotator, colors, save_one_box
 # Initialize EasyOCR reader
 reader = easyocr.Reader(['en'])
 
-def getOCR(im, coors, filename):
-    x, y, w, h = int(coors[0]), int(coors[1]), int(coors[2]), int(coors[3])
-    plate_roi = im[y:h, x:w]
-    
-    gray_plate = cv2.cvtColor(plate_roi, cv2.COLOR_BGR2GRAY)  # Convert to grayscale
-    # Convert grayscale image to RGB for EasyOCR
+def getOCR(im):
+    # Function to extract details from the number plate
+    gray_plate = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
     rgb_plate = cv2.cvtColor(gray_plate, cv2.COLOR_GRAY2RGB)
-    
     results = reader.readtext(rgb_plate)
-    
     text = ""
-    if results:  # Check if results are not empty
-        for result in results:
-            text += result[1] + " "
-        
-        # Save CSV file inside content folder
-        csv_file_path = "/content/number_plate.csv"
-        try:
-            with open(csv_file_path, 'w', newline='', encoding='utf-8') as csvfile:
-                csv_writer = csv.writer(csvfile)
-                # Write header only if the file is empty
-                if csvfile.tell() == 0:
-                    csv_writer.writerow(['Number Plate Details'])
-                csv_writer.writerow([text])
-            return csv_file_path
-        except Exception as e:
-            print(f"Error: {e}")
-            return None
-    else:
-        print("No text detected from number plate")
-        return None
+    for result in results:
+        text += result[1] + "\n"  # Add a newline between each detail
+    return text
 
 # Other code remains unchanged...
 
@@ -99,8 +74,20 @@ class DetectionPredictor(BasePredictor):
         for *xyxy, conf, cls in reversed(det):
             c = int(cls)  # integer class
             label = f'{self.model.names[c]} {conf:.2f}'
-            ocr_file_path = getOCR(im0, xyxy, f'{self.data_path.stem}_{c}')  # Get OCR results for this detection
-            log_string += f"{label} OCR saved to {ocr_file_path}, "
+            # Get ROI from the frame
+            roi = im0[int(xyxy[1]):int(xyxy[3]), int(xyxy[0]):int(xyxy[2])]
+            # Extract details from the number plate ROI
+            plate_details = getOCR(roi)
+            if plate_details:
+                # Save the details to CSV
+                csv_file_path = f"/content/{self.data_path.stem}_{c}_number_plate_details.csv"
+                with open(csv_file_path, 'w', newline='', encoding='utf-8') as csvfile:
+                    csv_writer = csv.writer(csvfile)
+                    csv_writer.writerow(['Number Plate Details'])
+                    csv_writer.writerow([plate_details])
+                log_string += f"{label} OCR saved to {csv_file_path}, "
+            else:
+                log_string += f"No text detected from number plate {label}, "
             
             # Add bounding box to image
             if self.args.save or self.args.save_crop or self.args.show:
